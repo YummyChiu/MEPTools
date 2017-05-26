@@ -50,6 +50,7 @@
     <Compile Include="Bend\BendCommand.cs" />
     <Compile Include="Bend\IBend.cs" />
     <Compile Include="Bend\MEPFactory.cs" />
+    <Compile Include="Link\LinkCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -58,6 +59,7 @@
       <Name>MEPTools.Util</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
