@@ -11,7 +11,7 @@ namespace MEPTools.Bend
 {
     interface IBend
     {
-        MEPCurve Create(Document doc, ElementId systemTypeId, ElementId mepTypeId, ElementId levelId, XYZ startPoint, XYZ endPoint);
+        MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint);
         ElementId GetMEPTypeId(MEPCurve mep);
         double GetDimension(MEPCurve mep, BendCommand.Direction direction);
     }
@@ -22,15 +22,18 @@ namespace MEPTools.Bend
 
         private PipeBend() { }
 
-        public MEPCurve Create(Document doc, ElementId systemTypeId, ElementId mepTypeId, ElementId levelId, XYZ startPoint, XYZ endPoint)
+        public MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint)
         {
-            return Pipe.Create(doc, systemTypeId, mepTypeId, levelId, startPoint, endPoint);
+            MEPCurve newMEP = doc.GetElement(ElementTransformUtils.CopyElement(doc, mep.Id, XYZ.Zero).ElementAt(0)) as MEPCurve;
+            LocationCurve newLocationCurve = newMEP.Location as LocationCurve;
+            newLocationCurve.Curve = Line.CreateBound(startPoint, endPoint);
+            return newMEP;
         }
 
         public double GetDimension(MEPCurve mep, BendCommand.Direction direction)
         {
             Parameter dim = mep.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER);
-            return dim.AsDouble();
+            return dim.AsDouble() * 1.5;
         }
 
         public ElementId GetMEPTypeId(MEPCurve mep)
@@ -45,9 +48,12 @@ namespace MEPTools.Bend
 
         private DuctBend() { }
 
-        public MEPCurve Create(Document doc, ElementId systemTypeId, ElementId mepTypeId, ElementId levelId, XYZ startPoint, XYZ endPoint)
+        public MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint)
         {
-            return Duct.Create(doc, systemTypeId, mepTypeId, levelId, startPoint, endPoint);
+            MEPCurve newMEP = doc.GetElement(ElementTransformUtils.CopyElement(doc, mep.Id, XYZ.Zero).ElementAt(0)) as MEPCurve;
+            LocationCurve newLocationCurve = newMEP.Location as LocationCurve;
+            newLocationCurve.Curve = Line.CreateBound(startPoint, endPoint);
+            return newMEP;
         }
 
         public double GetDimension(MEPCurve mep, BendCommand.Direction direction)
@@ -64,7 +70,7 @@ namespace MEPTools.Bend
                     dim = mep.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
                     break;
             }
-            return dim.AsDouble();
+            return dim.AsDouble() * 2;
         }
 
         public ElementId GetMEPTypeId(MEPCurve mep)

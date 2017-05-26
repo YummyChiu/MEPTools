@@ -11,18 +11,17 @@ namespace MEPTools.Bend
 {
     static class MEPFactory
     {
-        public static T Creat<T>(Document doc, ElementId systemTypeId, ElementId mepTypeId, ElementId levelId, XYZ startPoint, XYZ endPoint)
-            where T : MEPCurve
+        public static MEPCurve Create(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint)
         {
-            if (typeof(T).Equals(typeof(Pipe)))
+            if (mep is Pipe)
             {
-                return (T)PipeBend.Single.Create(doc, systemTypeId, mepTypeId, levelId, startPoint, endPoint);
+                return PipeBend.Single.CopyTo(doc, mep, startPoint, endPoint);
             }
-            else if (typeof(T).Equals(typeof(Duct)))
+            else if (mep is Duct)
             {
-                return (T)DuctBend.Single.Create(doc, systemTypeId, mepTypeId, levelId, startPoint, endPoint);
+                return DuctBend.Single.CopyTo(doc, mep, startPoint, endPoint);
             }
-            return default(T);
+            return default(MEPCurve);
         }
 
         public static double GetDimension(MEPCurve mep, BendCommand.Direction direction)
@@ -49,6 +48,20 @@ namespace MEPTools.Bend
                 return DuctBend.Single.GetMEPTypeId(mep);
             }
             return ElementId.InvalidElementId;
+        }
+
+        private static ElementId[] GetParameters(MEPCurve mepCurve)
+        {
+            ElementId[] result = new ElementId[3];
+            result[0] = mepCurve.LookupParameter("系统类型").AsElementId();
+            result[1] = MEPFactory.GetMEPTypeId(mepCurve);
+            result[2] = mepCurve.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM).AsElementId();
+
+            if (result[1] == null)
+            {
+                throw new ArgumentException("不支持管线类型", "MEPCurve mepCurve");
+            }
+            return result;
         }
     }
 }
