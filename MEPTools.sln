@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MEPTools", "MEPTools\MEPTools.csproj", "{33005E9D-6F30-4AD4-A0CB-F3E8DA4FE9FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MEPTools.Util", "MEPTools.Util\MEPTools.Util.csproj", "{900CF290-69EF-4A9A-9737-E662A0B6DE3C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{33005E9D-6F30-4AD4-A0CB-F3E8DA4FE9FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33005E9D-6F30-4AD4-A0CB-F3E8DA4FE9FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33005E9D-6F30-4AD4-A0CB-F3E8DA4FE9FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33005E9D-6F30-4AD4-A0CB-F3E8DA4FE9FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{900CF290-69EF-4A9A-9737-E662A0B6DE3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{900CF290-69EF-4A9A-9737-E662A0B6DE3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{900CF290-69EF-4A9A-9737-E662A0B6DE3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{900CF290-69EF-4A9A-9737-E662A0B6DE3C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
