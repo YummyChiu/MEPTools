@@ -49,6 +49,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IFactory.cs" />
+    <Compile Include="MEPFactory.cs" />
     <Compile Include="MEPSelectionFilter.cs" />
     <Compile Include="MEPUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

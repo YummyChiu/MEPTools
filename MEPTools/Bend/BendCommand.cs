@@ -28,7 +28,7 @@ namespace MEPTools.Bend
             using (Transaction trans = new Transaction(doc, "MEP Bend"))
             {
                 trans.Start();
-                BendOneSide(doc, pts, mep, Direction.Right, 1000 / 304.8);
+                BendOneSide(doc, pts, mep, Direction.Up, 500 / 304.8);
                 trans.Commit();
             }
             return Result.Succeeded;
@@ -76,7 +76,7 @@ namespace MEPTools.Bend
             XYZ PtStart = translation.OfPoint(pts[0]);
             translation.Origin = translation.Origin * 3;
             XYZ PtEnd = translation.OfPoint(pts[0]);
-            MEPCurve newMep = MEPFactory.Create(doc, mep, PtStart, PtEnd);
+            MEPCurve newMep = MEPFactory.CopyTo(doc, mep, PtStart, PtEnd);
             foreach (Connector Conn in newMep.ConnectorManager.Connectors)
             {
                 Conn.ConnectNearConnector(doc, meps);
