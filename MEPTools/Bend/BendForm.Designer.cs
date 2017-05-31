@@ -43,7 +43,7 @@
             this.radioButton45 = new System.Windows.Forms.RadioButton();
             this.radioButton30 = new System.Windows.Forms.RadioButton();
             this.label3 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.textBoxHeightOffset = new System.Windows.Forms.TextBox();
             this.groupBoxDirection.SuspendLayout();
             this.groupBoxAngle.SuspendLayout();
             this.SuspendLayout();
@@ -222,19 +222,19 @@
             this.label3.TabIndex = 7;
             this.label3.Text = "提示：请  点击  翻弯点！";
             // 
-            // textBox1
+            // textBoxHeightOffset
             // 
-            this.textBox1.Location = new System.Drawing.Point(87, 51);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(152, 23);
-            this.textBox1.TabIndex = 8;
+            this.textBoxHeightOffset.Location = new System.Drawing.Point(87, 51);
+            this.textBoxHeightOffset.Name = "textBoxHeightOffset";
+            this.textBoxHeightOffset.Size = new System.Drawing.Size(152, 23);
+            this.textBoxHeightOffset.TabIndex = 8;
             // 
             // BendForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(331, 338);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.textBoxHeightOffset);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.groupBoxAngle);
             this.Controls.Add(this.groupBoxDirection);
@@ -277,6 +277,6 @@
         private System.Windows.Forms.RadioButton radioButton45;
         private System.Windows.Forms.RadioButton radioButton30;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox textBoxHeightOffset;
     }
 }
