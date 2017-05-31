@@ -13,29 +13,58 @@ using Autodesk.Revit.DB.Plumbing;
 namespace MEPTools.Bend
 {
     [Autodesk.Revit.Attributes.Transaction(Autodesk.Revit.Attributes.TransactionMode.Manual)]
-    class BendCommand : IExternalCommand
+   public  class BendCommand : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             UIDocument uiDoc = commandData.Application.ActiveUIDocument;
             Document doc = uiDoc.Document;
 
-            MEPCurve mep = MEPUtil.PickMEPCurve(uiDoc, "请选择管道");
-            XYZ[] pts = new XYZ[2];
-            pts[0] = MEPUtil.PickPointOnMEPCurve(uiDoc, mep, "点选第一点开始起翻");
-            pts[1] = uiDoc.Selection.PickPoint(ObjectSnapTypes.Nearest, "第二点为起翻的方向");
-
-            using (Transaction trans = new Transaction(doc, "MEP Bend"))
+            BendForm form = new BendForm();
+            if (form.ShowDialog() == System.Windows.Forms.DialogResult.Cancel)
             {
-                trans.Start();
-                BendOneSide(doc, pts, mep, Direction.Up, 500 / 304.8);
-                trans.Commit();
+                return Result.Cancelled;
+            }
+
+            while (true)
+            {
+                try
+                {
+                    if (form.IsOneSideBend)
+                    {
+                        MEPCurve mep = MEPUtil.PickMEPCurve(uiDoc, "请选择管道");
+                        XYZ[] pts = new XYZ[2];
+                        pts[0] = MEPUtil.PickPointOnMEPCurve(uiDoc, mep, "点选第一点开始起翻");
+                        pts[1] = uiDoc.Selection.PickPoint(ObjectSnapTypes.Nearest, "第二点为起翻的方向");
+
+                        using (Transaction trans = new Transaction(doc, "MEP Bend"))
+                        {
+                            trans.Start();
+                            BendOneSide(doc, pts, mep, form.Direction, form.Offset/304.8, form.Angle);
+                            trans.Commit();
+                        }                      
+                    }
+                    else
+                    {
+                        TaskDialog.Show("Revit", "两边翻弯");
+                        break;
+                    }
+                }
+                catch (InvalidOperationException ex)
+                {
+                    TaskDialog.Show("Revit", ex.Message);
+                }
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                {
+                    break;
+                }
             }
             return Result.Succeeded;
+           
         }
 
-        internal enum Direction { Up, Down, Left, Right };
-        private void BendOneSide(Document doc, XYZ[] pts, MEPCurve mep, Direction direction, double heightOffset)
+        public  enum Direction { Up, Down, Left, Right };
+        private void BendOneSide(Document doc, XYZ[] pts, MEPCurve mep, Direction direction, double heightOffset, double angle)
         {
             Curve curve = ((LocationCurve)mep.Location).Curve;
             if (!(curve is Line))
@@ -70,13 +99,23 @@ namespace MEPTools.Bend
             }
 
             LocationCurve locationCurve = meps[IdxAdjust].Location as LocationCurve;
-            locationCurve.Curve = locationCurve.Curve.CreateTransformed(translation);
+            XYZ Tan = (locationCurve.Curve as Line).Direction * heightOffset * Math.Tan((90 - angle) * Math.PI / 180);
+            XYZ ptStart = pts[0];
+            XYZ ptEnd = null;
+            if (IdxAdjust == 0)
+            {
+                locationCurve.Curve = Line.CreateBound(locationCurve.Curve.GetEndPoint(0), locationCurve.Curve.GetEndPoint(1) - Tan).CreateTransformed(translation);
+                ptEnd = locationCurve.Curve.GetEndPoint(1);
+            }
+            else
+            {
+                locationCurve.Curve = Line.CreateBound(locationCurve.Curve.GetEndPoint(0) + Tan, locationCurve.Curve.GetEndPoint(1)).CreateTransformed(translation);
+                ptEnd = locationCurve.Curve.GetEndPoint(0);
+            }
 
-            translation.Origin = translation.Origin / 4;
-            XYZ PtStart = translation.OfPoint(pts[0]);
-            translation.Origin = translation.Origin * 3;
-            XYZ PtEnd = translation.OfPoint(pts[0]);
-            MEPCurve newMep = MEPFactory.CopyTo(doc, mep, PtStart, PtEnd);
+            ptStart = pts[0] + (ptEnd - ptStart) / 4;
+            ptEnd = pts[0] + (ptEnd - ptStart) * 3 / 4;
+            MEPCurve newMep = MEPFactory.CopyTo(doc, mep, ptStart, ptEnd);
             foreach (Connector Conn in newMep.ConnectorManager.Connectors)
             {
                 Conn.ConnectNearConnector(doc, meps);

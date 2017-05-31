@@ -127,7 +127,6 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(253, 245);
-            this.ControlBox = false;
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.groupBox1);
@@ -136,9 +135,12 @@
             this.Controls.Add(this.label1);
             this.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(269, 283);
+            this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(269, 283);
             this.Name = "LinkForm";
+            this.ShowIcon = false;
             this.Text = "管线连接";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
