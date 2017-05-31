@@ -17,6 +17,21 @@ namespace MEPTools.Link
             get { return double.Parse(textBox1.Text); }
         }
 
+        public double Angle
+        {
+            get
+            {
+                foreach (RadioButton rb in groupBox1.Controls)
+                {
+                    if (rb.Checked)
+                    {
+                        return double.Parse(rb.Text.TrimEnd('°'));
+                    }
+                }
+                return 90.0;
+            }
+        }
+
         public LinkForm()
         {
             InitializeComponent();

@@ -29,13 +29,13 @@ namespace MEPTools.Link
                 {
                     MEPCurve toLinkMep = MEPUtil.PickMEPCurve(uiDoc, "请选择连接管道");
                     MEPCurve beLinkedMep = MEPUtil.PickMEPCurve(uiDoc, "请选择被连接管道");
-                    LinkTwo(doc, toLinkMep, beLinkedMep, form.Offset / 304.8);
+                    LinkTwo(doc, toLinkMep, beLinkedMep, form.Offset / 304.8, form.Angle);
                 }
                 catch (InvalidOperationException ex)
                 {
                     TaskDialog.Show("Revit", ex.Message);
                 }
-                catch
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
                 {
                     break;
                 }
@@ -43,7 +43,7 @@ namespace MEPTools.Link
             return Result.Succeeded;
         }
 
-        private void LinkTwo(Document doc, MEPCurve toLinkMep, MEPCurve beLinkedMep, double heightOffset)
+        private void LinkTwo(Document doc, MEPCurve toLinkMep, MEPCurve beLinkedMep, double heightOffset, double angle)
         {
             using (Transaction trans = new Transaction(doc, "MEP Link"))
             {
@@ -57,21 +57,34 @@ namespace MEPTools.Link
                 XYZ[] projects = Project(toLink, beLinked);
                 // 断开被连接管线
                 MEPCurve[] meps = MEPUtil.SliceMEPCurveIntoTwo(doc, beLinkedMep, projects[0], 0.3280839895013123);
-                // 创建连接管线
                 XYZ vector = toLink.Direction.CrossProduct(beLinked.Direction);
                 if (vector.Z < 0)
                     vector = -vector;
-                double actualHeight = projects[0].DistanceTo(projects[1]) + heightOffset;
-                XYZ ptStart = projects[0] + vector * actualHeight / 4;
-                XYZ ptEnd = projects[0] + vector * actualHeight * 3 / 4;
-                MEPCurve newMep = MEPFactory.CopyTo(doc, toLinkMep, ptStart, ptEnd);
+                // 创建中间管线
+                XYZ[] endPoints = GetMiddleEndPoints(projects, toLink, heightOffset, angle);
+                MEPCurve newMep = MEPFactory.CopyTo(doc, toLinkMep, endPoints[0], endPoints[1]);
                 // 偏移连接管线
-                LocationCurve locationCurve = toLinkMep.Location as LocationCurve;
-                locationCurve.Curve = locationCurve.Curve.CreateTransformed(Transform.CreateTranslation(vector * heightOffset));
+                ElementTransformUtils.MoveElement(doc, toLinkMep.Id, vector * heightOffset);
                 // 创建连接管件
                 CreatFitting(doc, meps[0], meps[1], newMep, toLinkMep);
                 trans.Commit();
             }
+        }
+
+        private XYZ[] GetMiddleEndPoints(XYZ[] projects, Line toLink, double offset, double angle)
+        {
+            XYZ vector = toLink.Direction;
+            if (toLink.GetEndPoint(0).DistanceTo(projects[1]) > toLink.GetEndPoint(1).DistanceTo(projects[1]))
+            {
+                vector = -vector;
+            }
+            double symbol = (projects[1] - projects[0]).Z < 0 ? -1 : 1;
+            double length = projects[0].DistanceTo(projects[1]) * symbol + offset;
+            XYZ ptEnd = projects[1] + vector * Math.Abs(length) * Math.Sin((90 - angle) * Math.PI / 180);
+            return new XYZ[] {
+                projects[0] + (ptEnd - projects[0]) / 4,
+                projects[0] + (ptEnd - projects[0]) * 3 / 4
+            };
         }
 
         private void CreatFitting(Document doc, params MEPCurve[] meps)
@@ -134,7 +147,7 @@ namespace MEPTools.Link
                 }
             }
             if (project1 == null) throw new InvalidOperationException("连接管线与被连接管线可能存在选择错误");
-            Line tmp = Line.CreateBound(ToLink.GetEndPoint(0) - ToLink.Direction, ToLink.GetEndPoint(1) + ToLink.Direction);
+            Line tmp = Line.CreateBound(ToLink.GetEndPoint(0) - ToLink.Direction * 10, ToLink.GetEndPoint(1) + ToLink.Direction * 10);
             IntersectionResult result2 = tmp.Project(project1);
             project2 = result2.XYZPoint;
             return new XYZ[] { project1, project2 };
