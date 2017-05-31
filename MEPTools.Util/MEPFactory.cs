@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MEPTools.Bend
+namespace MEPTools.Util
 {
-    static class MEPFactory
+    public static class MEPFactory
     {
         public static MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint)
         {
@@ -24,7 +24,7 @@ namespace MEPTools.Bend
             return default(MEPCurve);
         }
 
-        public static double GetDimension(MEPCurve mep, BendCommand.Direction direction)
+        public static double GetDimension(MEPCurve mep, Direction direction)
         {
             if (mep is Pipe)
             {

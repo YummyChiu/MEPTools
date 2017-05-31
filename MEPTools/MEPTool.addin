@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>MEPTool</Name>
+    <Assembly>MEP\MEPTools.dll</Assembly>
+    <AddInId>6E8EE119-F24A-428C-81DC-E5B8A84B5383</AddInId>
+    <FullClassName>MEPTools.Application.Application</FullClassName>
+    <VendorId>ADSK</VendorId>
+  </AddIn>
+</RevitAddIns>

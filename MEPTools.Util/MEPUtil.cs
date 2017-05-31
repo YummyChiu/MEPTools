@@ -38,13 +38,14 @@ namespace MEPTools.Util
         /// <summary>
         /// 打断管件
         /// </summary>
-        public static MEPCurve[] SliceMEPCurveIntoTwo(Document doc, MEPCurve mep, XYZ pt)
+        public static MEPCurve[] SliceMEPCurveIntoTwo(Document doc, MEPCurve mep, XYZ pt, double sliceSpace)
         {
             LocationCurve locationCurve = mep.Location as LocationCurve;
             XYZ StartPt = locationCurve.Curve.GetEndPoint(0);
             XYZ EndPt = locationCurve.Curve.GetEndPoint(1);
-            Line l1 = Line.CreateBound(StartPt, pt);
-            Line l2 = Line.CreateBound(pt, EndPt);
+            XYZ vector = (EndPt - StartPt).Normalize();
+            Line l1 = Line.CreateBound(StartPt, pt - vector * sliceSpace * 0.5);
+            Line l2 = Line.CreateBound(pt + vector * sliceSpace * 0.5, EndPt);
             // 原地复制原机电管线
             MEPCurve newMEP = doc.GetElement(ElementTransformUtils.CopyElement(doc, mep.Id, XYZ.Zero).ElementAt(0)) as MEPCurve;
             LocationCurve newLocationCurve = newMEP.Location as LocationCurve;
@@ -83,6 +84,36 @@ namespace MEPTools.Util
             locationCurve.Curve = l2;
             MEPCurve[] result = new MEPCurve[2] { newMEP, mep };
             return result;
+        }
+
+        /// <summary>
+        /// 在距离最近的连接处作弯头连接
+        /// </summary>
+        public static void ConnectNearConnector(this Connector This, Document doc, params MEPCurve[] meps)
+        {
+            Connector near = null;
+            double min = double.MaxValue;
+            foreach (MEPCurve mep in meps)
+            {
+                foreach (Connector Conn in mep.ConnectorManager.Connectors)
+                {
+                    double distance = This.Origin.DistanceTo(Conn.Origin);
+                    if (distance < min)
+                    {
+                        min = distance;
+                        near = Conn;
+                    }
+                }
+            }
+            try
+            {
+                doc.Create.NewElbowFitting(This, near);
+            }
+            catch (Autodesk.Revit.Exceptions.InvalidOperationException Ex)
+            {
+                if (Ex.Message.Contains("failed to insert elbow"))
+                    throw new InvalidOperationException("请尝试导入弯头族再进行操作");
+            }
         }
     }
 }

@@ -7,16 +7,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MEPTools.Bend
+namespace MEPTools.Util
 {
-    interface IBend
+    public enum Direction { Horizontal, Vertical }
+    interface IFactory
     {
         MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint);
         ElementId GetMEPTypeId(MEPCurve mep);
-        double GetDimension(MEPCurve mep, BendCommand.Direction direction);
+        double GetDimension(MEPCurve mep, Direction direction);
     }
 
-    class PipeBend : IBend
+    class PipeBend : IFactory
     {
         public static PipeBend Single = new PipeBend();
 
@@ -30,7 +31,7 @@ namespace MEPTools.Bend
             return newMEP;
         }
 
-        public double GetDimension(MEPCurve mep, BendCommand.Direction direction)
+        public double GetDimension(MEPCurve mep, Direction direction)
         {
             Parameter dim = mep.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER);
             return dim.AsDouble() * 2;
@@ -42,7 +43,7 @@ namespace MEPTools.Bend
         }
     }
 
-    class DuctBend : IBend
+    class DuctBend : IFactory
     {
         public static DuctBend Single = new DuctBend();
 
@@ -56,17 +57,15 @@ namespace MEPTools.Bend
             return newMEP;
         }
 
-        public double GetDimension(MEPCurve mep, BendCommand.Direction direction)
+        public double GetDimension(MEPCurve mep, Direction direction)
         {
             Parameter dim = null;
             switch (direction)
             {
-                case BendCommand.Direction.Up:
-                case BendCommand.Direction.Down:
+                case Direction.Vertical:
                     dim = mep.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
                     break;
-                case BendCommand.Direction.Left:
-                case BendCommand.Direction.Right:
+                case Direction.Horizontal:
                     dim = mep.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
                     break;
             }

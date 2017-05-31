@@ -28,7 +28,7 @@ namespace MEPTools.Bend
             using (Transaction trans = new Transaction(doc, "MEP Bend"))
             {
                 trans.Start();
-                BendOneSide(doc, pts, mep, Direction.Left, 600 / 304.8);
+                BendOneSide(doc, pts, mep, Direction.Up, 500 / 304.8);
                 trans.Commit();
             }
             return Result.Succeeded;
@@ -43,11 +43,11 @@ namespace MEPTools.Bend
 
             // 判断起翻高度是否合理
             double dim = MEPFactory.GetDimension(mep, direction);
-            if (heightOffset < 1.5 * dim) throw new InvalidOperationException("起翻高度过低");
+            if (heightOffset < dim) throw new InvalidOperationException("起翻高度过低");
 
             XYZ bendDirection = (pts[1] - pts[0]).Normalize();
             XYZ mepDirection = ((Line)curve).Direction;
-            MEPCurve[] meps = MEPUtil.SliceMEPCurveIntoTwo(doc, mep, pts[0]);
+            MEPCurve[] meps = MEPUtil.SliceMEPCurveIntoTwo(doc, mep, pts[0], 0);
             int IdxAdjust = mepDirection.AngleTo(bendDirection) <= Math.PI * 0.5 ? 1 : 0;
 
             Transform translation = Transform.Identity;
@@ -71,20 +71,16 @@ namespace MEPTools.Bend
 
             LocationCurve locationCurve = meps[IdxAdjust].Location as LocationCurve;
             locationCurve.Curve = locationCurve.Curve.CreateTransformed(translation);
-        }
 
-        private ElementId[] GetParameters(MEPCurve mepCurve)
-        {
-            ElementId[] result = new ElementId[3];
-            result[0] = mepCurve.MEPSystem.Id;
-            result[1] = MEPFactory.GetMEPTypeId(mepCurve);
-            result[2] = mepCurve.LevelId;
-
-            if (result[1] == null)
+            translation.Origin = translation.Origin / 4;
+            XYZ PtStart = translation.OfPoint(pts[0]);
+            translation.Origin = translation.Origin * 3;
+            XYZ PtEnd = translation.OfPoint(pts[0]);
+            MEPCurve newMep = MEPFactory.CopyTo(doc, mep, PtStart, PtEnd);
+            foreach (Connector Conn in newMep.ConnectorManager.Connectors)
             {
-                throw new ArgumentException("不支持管线类型", "MEPCurve mepCurve");
+                Conn.ConnectNearConnector(doc, meps);
             }
-            return result;
         }
     }
 }
