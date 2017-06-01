@@ -61,6 +61,7 @@
     </Compile>
     <Compile Include="Bend\IBend.cs" />
     <Compile Include="Bend\MEPFactory.cs" />
+    <Compile Include="FireHyrantLink\FireHyrantLinkCommand.cs" />
     <Compile Include="Link\LinkCommand.cs" />
     <Compile Include="Link\LinkForm.cs">
       <SubType>Form</SubType>
