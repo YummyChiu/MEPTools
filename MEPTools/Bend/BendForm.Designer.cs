@@ -169,13 +169,11 @@
             // radioButton90
             // 
             this.radioButton90.AutoSize = true;
-            this.radioButton90.Checked = true;
             this.radioButton90.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.radioButton90.Location = new System.Drawing.Point(237, 34);
             this.radioButton90.Name = "radioButton90";
             this.radioButton90.Size = new System.Drawing.Size(45, 21);
             this.radioButton90.TabIndex = 3;
-            this.radioButton90.TabStop = true;
             this.radioButton90.Text = "90°";
             this.radioButton90.UseVisualStyleBackColor = true;
             // 
@@ -193,11 +191,13 @@
             // radioButton45
             // 
             this.radioButton45.AutoSize = true;
+            this.radioButton45.Checked = true;
             this.radioButton45.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.radioButton45.Location = new System.Drawing.Point(83, 34);
             this.radioButton45.Name = "radioButton45";
             this.radioButton45.Size = new System.Drawing.Size(45, 21);
             this.radioButton45.TabIndex = 1;
+            this.radioButton45.TabStop = true;
             this.radioButton45.Text = "45°";
             this.radioButton45.UseVisualStyleBackColor = true;
             // 
@@ -228,6 +228,7 @@
             this.textBoxHeightOffset.Name = "textBoxHeightOffset";
             this.textBoxHeightOffset.Size = new System.Drawing.Size(152, 23);
             this.textBoxHeightOffset.TabIndex = 8;
+            this.textBoxHeightOffset.Text = "200";
             // 
             // BendForm
             // 

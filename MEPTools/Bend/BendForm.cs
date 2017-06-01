@@ -37,7 +37,6 @@ namespace MEPTools.Bend
                         else if (checkedDirection == "向右")
                             return  BendCommand.Direction.Right;
                     }
-
                 }
                 return BendCommand.Direction.Up;
             }
@@ -69,6 +68,7 @@ namespace MEPTools.Bend
                 isOneSideBend = value;
             }
         }
+
         public BendForm()
         {
             InitializeComponent();
