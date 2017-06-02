@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.UI;
 using MEPTools.Bend;
+using MEPTools.FireHyrantLink;
 using MEPTools.Link;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace MEPTools.Application
                 ribbonPanel = application.CreateRibbonPanel("管综");
             ribbonPanel.AddItem(new PushButtonData("OneStepBend", "\n\n一键\n翻弯", typeof(Application).Assembly.Location, typeof(BendCommand).FullName));
             ribbonPanel.AddItem(new PushButtonData("OneStepLink", "\n\n一键\n连接", typeof(Application).Assembly.Location, typeof(LinkCommand).FullName));
+            ribbonPanel.AddItem(new PushButtonData("OneStepFireHydrantLink", "\n\n连接\n消火栓", typeof(Application).Assembly.Location, typeof(FireHyrantLinkCommand).FullName));
             return Result.Succeeded;
         }
     }

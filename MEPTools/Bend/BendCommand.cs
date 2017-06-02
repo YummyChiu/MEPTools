@@ -32,10 +32,6 @@ namespace MEPTools.Bend
                 {
                     if (form.IsOneSideBend)
                     {
-                        //MEPCurve mep = MEPUtil.PickMEPCurve(uiDoc, "请选择管道");
-                        //XYZ[] pts = new XYZ[2];
-                        //pts[0] = MEPUtil.PickPointOnMEPCurve(uiDoc, mep, "点选第一点开始起翻");
-                        //pts[1] = uiDoc.Selection.PickPoint(ObjectSnapTypes.Nearest, "第二点为起翻的方向");
                         MEPCurve mep = null;
                         XYZ[] pts = MEPUtil.PickTwoPointOnMEPCurve(uiDoc, new string[] { "点选第一点开始起翻", "第二点为起翻的方向" }, out mep);
 
@@ -48,10 +44,6 @@ namespace MEPTools.Bend
                     }
                     else
                     {
-                        //MEPCurve mep = MEPUtil.PickMEPCurve(uiDoc, "请选择管道");
-                        //XYZ[] pts = new XYZ[2];
-                        //pts[0] = MEPUtil.PickPointOnMEPCurve(uiDoc, mep, "点选第一点开始起翻");
-                        //pts[1] = MEPUtil.PickPointOnMEPCurve(uiDoc, mep, "点选第二点结束起翻");
                         MEPCurve mep = null;
                         XYZ[] pts = MEPUtil.PickTwoPointOnMEPCurve(uiDoc, new string[] { "点选第一点开始起翻", "点选第二点结束起翻" }, out mep);
 
@@ -69,10 +61,7 @@ namespace MEPTools.Bend
                 }
                 catch (Autodesk.Revit.Exceptions.OperationCanceledException)
                 {
-                    if (form.ShowDialog() == System.Windows.Forms.DialogResult.Cancel)
-                    {
-                        break;
-                    }
+                    break;
                 }
                 catch
                 {

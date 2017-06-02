@@ -18,106 +18,69 @@ namespace MEPTools.FireHyrantLink
         {
             UIDocument uiDoc = commandData.Application.ActiveUIDocument;
             Document doc = uiDoc.Document;
-            FamilyInstance fireHyrant = PickFireHyrant(uiDoc, "请选择消火栓");
-            MEPCurve mep = MEPUtil.PickMEPCurve(uiDoc, "请选择立管");
-            double height = 200;
-            bool isBottom = true;
-            LinkFireHyrant(doc, fireHyrant, mep, height, isBottom);
 
-            // 查找最近的两个connector
-            ConnectorManager fireHyrantCM = fireHyrant.MEPModel.ConnectorManager;
-
-            Connector fireHyrantConnector = null; //消火栓
-            Connector pipeConnector = null;
-
-            if (fireHyrantCM.Connectors.Size >= 2)
+            FireHydrantLinkForm form = new FireHydrantLinkForm();
+            if (form.ShowDialog() == System.Windows.Forms.DialogResult.Cancel)
             {
-                // 如果有两个connector 就有根据用户的选择决定消火栓的进水口（侧进水口，底进水口）           
-                ConnectorSetIterator temp = fireHyrantCM.Connectors.ForwardIterator();
-                temp.MoveNext();
-                Connector tempcon = temp.Current as Connector;
+                return Result.Cancelled;
+            }
 
-                foreach (Connector con in fireHyrantCM.Connectors)
+            while (true)
+            {
+                try
                 {
-                    if (isBottom)
-                    {
-                        if (con.Origin.Z < tempcon.Origin.Z)
-                        {
-                            fireHyrantConnector = con;
-                        }
-                    }
-                    else
-                    {
-                        if (con.Origin.Z > tempcon.Origin.Z)
-                        {
-                            fireHyrantConnector = con;
-                        }
-                    }
+                    FamilyInstance fireHydrant = PickFireHyrant(uiDoc, "请选择消火栓");
+                    MEPCurve mep = MEPUtil.PickMEPCurve(uiDoc, "请选择立管");
+                    LinkFireHyrant(doc, fireHydrant, mep, form.Offset / 304.8, form.IsBottom);
+                }
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                {
+                    break;
+                }
+                catch
+                {
+                    throw;
                 }
             }
-
-            else
-            {
-                // 否则默认底进水口
-                ConnectorSetIterator temp = fireHyrantCM.Connectors.ForwardIterator();
-                temp.MoveNext();
-                fireHyrantConnector = temp.Current as Connector;
-            }
-
-            double minDistance = double.MaxValue;
-
-            foreach (Connector con in mep.ConnectorManager.Connectors)
-            {
-                var dis = fireHyrantConnector.Origin.DistanceTo(con.Origin);
-                if (dis < minDistance)
-                {
-                    minDistance = dis;
-                    pipeConnector = con;
-                }
-            }
-
-            //CreateMiddlePipe(pipeConnector,fireHyrantConnector, ,height/304.8);
 
             return Result.Succeeded;
         }
 
-        private void LinkFireHyrant(Document doc, FamilyInstance fireHyrant, MEPCurve mep, double height, bool isBottom)
+        private void LinkFireHyrant(Document doc, FamilyInstance fireHydrant, MEPCurve mep, double height, bool isBottom)
         {
-            ConnectorManager fireHyrantCM = fireHyrant.MEPModel.ConnectorManager;
-            Connector fireHyrantConnector = null; //消火栓
-            Connector pipeConnector = null;
-
+            using (Transaction trans = new Transaction(doc, "连接消火栓！"))
+            {
+                trans.Start();
+                CreateMiddlePipe(doc, mep, fireHydrant, height / 304.8, isBottom);
+                trans.Commit();
+            }
         }
 
-        private Connector[] FindConnector(ConnectorManager fireCM, MEPCurve mep, bool isBottom)
+        private Connector[] FindConnector(FamilyInstance fireHydrant, MEPCurve mep, bool isBottom)
         {
             Connector fireConnector = null;
-            if (fireCM.Connectors != null)
+            foreach (Connector con in fireHydrant.MEPModel.ConnectorManager.Connectors)
             {
-                ConnectorSetIterator temp = fireCM.Connectors.ForwardIterator();
-                temp.MoveNext();
-                Connector firstConnector = temp.Current as Connector;
-                if (fireCM.Connectors.Size > 1)
+                if (fireConnector == null)
                 {
-                    foreach (Connector con in fireCM.Connectors)
-                    {
-                        if (isBottom)
-                        {
-                            if (con.Origin.Z < firstConnector.Origin.Z)
-                                fireConnector = con;
-                        }
-                        else
-                        {
-                            if (con.Origin.Z > firstConnector.Origin.Z)
-                                fireConnector = con;
-                        }
-                    }
+                    fireConnector = con;
                 }
                 else
-                    fireConnector = firstConnector;
+                {
+                    if (isBottom)
+                    {
+                        if (con.Origin.Z < fireConnector.Origin.Z)
+                            fireConnector = con;
+                    }
+                    else
+                    {
+                        if (con.Origin.Z > fireConnector.Origin.Z)
+                            fireConnector = con;
+                    }
+                }
             }
             return new Connector[2] {
-                fireConnector,GetNearestConnector(fireConnector,mep)
+                fireConnector, GetNearestConnector(fireConnector, mep)
             };
         }
 
@@ -136,9 +99,60 @@ namespace MEPTools.FireHyrantLink
             }
             return pipeConnector;
         }
-        private void CreateMiddlePipe(Connector pipeConnector, Connector fireHyrantConnector, double dim, double offSet)
-        {
 
+        private void CreateMiddlePipe(Document doc, MEPCurve mep, FamilyInstance fireHydrant, double offSet, bool isBottom)
+        {
+            Connector[] connectors = FindConnector(fireHydrant, mep, isBottom);
+            XYZ startPoint = connectors[1].Origin;
+            XYZ endPoint = connectors[0].Origin;
+
+            if (isBottom)
+            {
+                double Z = connectors[0].Origin.Z - offSet;
+                startPoint = new XYZ(connectors[1].Origin.X, connectors[1].Origin.Y, Z);
+                endPoint = new XYZ(connectors[0].Origin.X, connectors[0].Origin.Y, Z);
+                MEPCurve newVerticalMep = MEPFactory.CopyTo(doc, mep, connectors[0].Origin, endPoint);
+                connectors[0].ConnectTo(GetNearestConnector(connectors[0], newVerticalMep));
+                MEPCurve newMep = MEPFactory.CopyTo(doc, mep, startPoint, endPoint);
+                connectors[1].ConnectNearConnector(doc, newMep);
+                GetConnectorInPoint(newVerticalMep, ((LocationCurve)newVerticalMep.Location).Curve.GetEndPoint(1)).ConnectNearConnector(doc, newMep);
+            }
+            else
+            {
+                XYZ pipeConnectPt = new XYZ(connectors[1].Origin.X, connectors[1].Origin.Y, connectors[0].Origin.Z);
+                XYZ Out = fireHydrant.HandOrientation;
+                XYZ outToPipe = (pipeConnectPt - connectors[0].Origin).Normalize();
+                if (1 - Math.Abs(Out.DotProduct(outToPipe)) < 0.01)// 消火栓与水管处于同一竖直平面
+                {
+                    XYZ vector = pipeConnectPt - connectors[0].Origin;
+                    MEPCurve newMep = MEPFactory.CopyTo(doc, mep, connectors[0].Origin + vector / 4, connectors[0].Origin + vector * 3 / 4);
+                    GetConnectorInPoint(newMep, connectors[0].Origin + vector / 4).ConnectTo(connectors[0]);
+                    doc.Create.NewElbowFitting(GetConnectorInPoint(newMep, connectors[0].Origin + vector * 3 / 4), connectors[1]);
+                }
+                else// 消火栓与水管不处于同一竖直平面
+                {
+                    if (Out.DotProduct(outToPipe) < 0)
+                        Out = -Out;
+                    double length = (pipeConnectPt - connectors[0].Origin).DotProduct(Out) / 2;
+                    MEPCurve newMep1 = MEPFactory.CopyTo(doc, mep, connectors[0].Origin, connectors[0].Origin + Out * length);
+                    GetConnectorInPoint(newMep1, connectors[0].Origin).ConnectTo(connectors[0]);
+                    XYZ ptStart = (newMep1.Location as LocationCurve).Curve.GetEndPoint(1);
+                    XYZ vector = pipeConnectPt - ptStart;
+                    MEPCurve newMep2 = MEPFactory.CopyTo(doc, mep, ptStart + vector / 4, ptStart + vector * 3 / 4);
+                    GetConnectorInPoint(newMep1, ptStart).ConnectNearConnector(doc, newMep2);
+                    connectors[1].ConnectNearConnector(doc, newMep2);
+                }
+            }
+        }
+
+        private Connector GetConnectorInPoint(MEPCurve mep, XYZ point)
+        {
+            foreach (Connector con in mep.ConnectorManager.Connectors)
+            {
+                if (con.Origin.IsAlmostEqualTo(point))
+                    return con;
+            }
+            return null;
         }
 
         public FamilyInstance PickFireHyrant(UIDocument uiDoc, string prompt)
@@ -147,24 +161,4 @@ namespace MEPTools.FireHyrantLink
             return uiDoc.Document.GetElement(refer) as FamilyInstance;
         }
     }
-
-    class FireHyrantFilter : ISelectionFilter
-    {
-        bool ISelectionFilter.AllowElement(Element elem)
-        {
-            if (elem is FamilyInstance && elem.Category.Id.IntegerValue == (int)BuiltInCategory.OST_MechanicalEquipment)
-            {
-                return true;
-            }
-            else
-                return false;
-        }
-
-        bool ISelectionFilter.AllowReference(Reference reference, XYZ position)
-        {
-            return false;
-        }
-    }
-
-
 }

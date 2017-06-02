@@ -37,10 +37,7 @@ namespace MEPTools.Link
                 }
                 catch (Autodesk.Revit.Exceptions.OperationCanceledException)
                 {
-                    if (form.ShowDialog() == System.Windows.Forms.DialogResult.Cancel)
-                    {
-                        break;
-                    }
+                    break;
                 }
                 catch
                 {

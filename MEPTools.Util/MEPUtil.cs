@@ -123,7 +123,7 @@ namespace MEPTools.Util
             double min = double.MaxValue;
             foreach (MEPCurve mep in meps)
             {
-                foreach (Connector Conn in mep.ConnectorManager.Connectors)
+                foreach (Connector Conn in mep.ConnectorManager.UnusedConnectors)
                 {
                     double distance = This.Origin.DistanceTo(Conn.Origin);
                     if (distance < min)
