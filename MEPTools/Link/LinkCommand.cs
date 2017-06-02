@@ -39,6 +39,10 @@ namespace MEPTools.Link
                 {
                     break;
                 }
+                catch
+                {
+                    throw;
+                }
             }
             return Result.Succeeded;
         }

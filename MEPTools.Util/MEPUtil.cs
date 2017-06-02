@@ -35,6 +35,22 @@ namespace MEPTools.Util
             return intersectionResult.XYZPoint;
         }
 
+        public static XYZ[] PickTwoPointOnMEPCurve(UIDocument uiDoc, string[] prompts, out MEPCurve mep)
+        {
+            XYZ[] selections = new XYZ[2];
+            Reference refer1 = uiDoc.Selection.PickObject(ObjectType.PointOnElement, /*new MEPSelectionFilter(),*/ prompts[0]);
+            LocationCurve locationCurve = (uiDoc.Document.GetElement(refer1) as MEPCurve).Location as LocationCurve;
+            IntersectionResult intersectionResult = locationCurve.Curve.Project(refer1.GlobalPoint);
+            selections[0] = intersectionResult.XYZPoint;
+            Reference refer2 = uiDoc.Selection.PickObject(ObjectType.PointOnElement, /*new MEPSelectionFilter(),*/ prompts[1]);
+            if (refer1.ElementId != refer2.ElementId)
+                throw new InvalidOperationException("暂不支持选择不同管线进行翻弯操作");
+            intersectionResult = locationCurve.Curve.Project(refer2.GlobalPoint);
+            selections[1] = intersectionResult.XYZPoint;
+            mep = uiDoc.Document.GetElement(refer2) as MEPCurve;
+            return selections;
+        }
+
         /// <summary>
         /// 打断管件
         /// </summary>
@@ -86,6 +102,18 @@ namespace MEPTools.Util
             return result;
         }
 
+        public static MEPCurve[] SliceMEPCurveIntoThree(Document doc, MEPCurve mep, XYZ[] pts, double sliceSpace)
+        {
+            LocationCurve locationCurve = mep.Location as LocationCurve;
+            XYZ StartPt = locationCurve.Curve.GetEndPoint(0);
+            XYZ EndPt = locationCurve.Curve.GetEndPoint(1);
+            XYZ vector = (EndPt - StartPt).Normalize();
+            int twicePt = vector.IsAlmostEqualTo((pts[1] - pts[0]).Normalize()) ? 1 : 0;
+            MEPCurve[] tmp1 = SliceMEPCurveIntoTwo(doc, mep, pts[1 - twicePt], sliceSpace);
+            MEPCurve[] tmp2 = SliceMEPCurveIntoTwo(doc, tmp1[1], pts[twicePt], sliceSpace);
+            return new MEPCurve[] { tmp1[0], tmp2[0], tmp2[1] };
+        }
+
         /// <summary>
         /// 在距离最近的连接处作弯头连接
         /// </summary>
@@ -95,7 +123,7 @@ namespace MEPTools.Util
             double min = double.MaxValue;
             foreach (MEPCurve mep in meps)
             {
-                foreach (Connector Conn in mep.ConnectorManager.Connectors)
+                foreach (Connector Conn in mep.ConnectorManager.UnusedConnectors)
                 {
                     double distance = This.Origin.DistanceTo(Conn.Origin);
                     if (distance < min)
