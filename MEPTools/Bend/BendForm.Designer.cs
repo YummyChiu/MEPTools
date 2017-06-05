@@ -52,9 +52,9 @@
             // 
             this.bendTwoSideBtn.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.bendTwoSideBtn.Font = new System.Drawing.Font("微软雅黑", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.bendTwoSideBtn.Location = new System.Drawing.Point(12, 280);
+            this.bendTwoSideBtn.Location = new System.Drawing.Point(13, 280);
             this.bendTwoSideBtn.Name = "bendTwoSideBtn";
-            this.bendTwoSideBtn.Size = new System.Drawing.Size(140, 40);
+            this.bendTwoSideBtn.Size = new System.Drawing.Size(134, 40);
             this.bendTwoSideBtn.TabIndex = 0;
             this.bendTwoSideBtn.Text = "两边翻弯";
             this.bendTwoSideBtn.UseVisualStyleBackColor = true;
@@ -66,7 +66,7 @@
             this.bendOneSizeBtn.Font = new System.Drawing.Font("微软雅黑", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.bendOneSizeBtn.Location = new System.Drawing.Point(179, 280);
             this.bendOneSizeBtn.Name = "bendOneSizeBtn";
-            this.bendOneSizeBtn.Size = new System.Drawing.Size(140, 40);
+            this.bendOneSizeBtn.Size = new System.Drawing.Size(134, 40);
             this.bendOneSizeBtn.TabIndex = 1;
             this.bendOneSizeBtn.Text = "一边翻弯";
             this.bendOneSizeBtn.UseVisualStyleBackColor = true;

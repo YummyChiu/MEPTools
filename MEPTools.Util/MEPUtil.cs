@@ -23,15 +23,12 @@ namespace MEPTools.Util
         /// <summary>
         /// 在管件上选择一个打断点
         /// </summary>
-        public static XYZ PickPointOnMEPCurve(UIDocument uiDoc, MEPCurve mep, string prompt)
+        public static XYZ PickPointOnMEPCurve(UIDocument uiDoc, string prompt, out MEPCurve mep)
         {
-            XYZ selectionPoint = uiDoc.Selection.PickPoint(ObjectSnapTypes.Nearest, prompt);
-            LocationCurve locationCurve = mep.Location as LocationCurve;
-            IntersectionResult intersectionResult = locationCurve.Curve.Project(selectionPoint);
-            if (intersectionResult == null || intersectionResult.XYZPoint == null)
-            {
-                throw new InvalidOperationException("Method: MEPUtil.PickPointOnMEPCurve\nReason: Project Failed.");
-            }
+            Reference refer = uiDoc.Selection.PickObject(ObjectType.PointOnElement, prompt);
+            LocationCurve locationCurve = (uiDoc.Document.GetElement(refer) as MEPCurve).Location as LocationCurve;
+            IntersectionResult intersectionResult = locationCurve.Curve.Project(refer.GlobalPoint);
+            mep = uiDoc.Document.GetElement(refer) as MEPCurve;
             return intersectionResult.XYZPoint;
         }
 
@@ -119,20 +116,7 @@ namespace MEPTools.Util
         /// </summary>
         public static void ConnectNearConnector(this Connector This, Document doc, params MEPCurve[] meps)
         {
-            Connector near = null;
-            double min = double.MaxValue;
-            foreach (MEPCurve mep in meps)
-            {
-                foreach (Connector Conn in mep.ConnectorManager.UnusedConnectors)
-                {
-                    double distance = This.Origin.DistanceTo(Conn.Origin);
-                    if (distance < min)
-                    {
-                        min = distance;
-                        near = Conn;
-                    }
-                }
-            }
+            Connector near = This.GetNearestConnector(meps);
             try
             {
                 doc.Create.NewElbowFitting(This, near);
@@ -142,6 +126,46 @@ namespace MEPTools.Util
                 if (Ex.Message.Contains("failed to insert elbow"))
                     throw new InvalidOperationException("请尝试导入弯头族再进行操作");
             }
+        }
+
+        public static Connector GetNearestConnector(this Connector fireConnector, params MEPCurve[] meps)
+        {
+            double minDistance = double.MaxValue;
+            Connector pipeConnector = null;
+            foreach (MEPCurve mep in meps)
+            {
+                foreach (Connector con in mep.ConnectorManager.UnusedConnectors)
+                {
+                    var dis = fireConnector.Origin.DistanceTo(con.Origin);
+                    if (dis < minDistance)
+                    {
+                        minDistance = dis;
+                        pipeConnector = con;
+                    }
+                }
+            }
+            return pipeConnector;
+        }
+
+        public static void Delete(Document doc, Element elem)
+        {
+            doc.Delete(elem.Id);
+            doc.Regenerate();
+        }
+
+        public static Line ToLine(this MEPCurve mep)
+        {
+            return ((LocationCurve)mep.Location).Curve as Line;
+        }
+
+        public static Connector GetConnectorInPoint(this MEPCurve mep, XYZ point)
+        {
+            foreach (Connector con in mep.ConnectorManager.Connectors)
+            {
+                if (con.Origin.IsAlmostEqualTo(point))
+                    return con;
+            }
+            return null;
         }
     }
 }

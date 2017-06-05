@@ -51,7 +51,47 @@ namespace MEPTools.FireHyrantLink
             using (Transaction trans = new Transaction(doc, "连接消火栓！"))
             {
                 trans.Start();
-                CreateMiddlePipe(doc, mep, fireHydrant, height / 304.8, isBottom);
+                Connector[] connectors = FindConnector(fireHydrant, mep, isBottom);
+                XYZ startPoint = connectors[1].Origin;
+                XYZ endPoint = connectors[0].Origin;
+
+                if (isBottom)
+                {
+                    double Z = connectors[0].Origin.Z - height;
+                    startPoint = new XYZ(connectors[1].Origin.X, connectors[1].Origin.Y, Z);
+                    endPoint = new XYZ(connectors[0].Origin.X, connectors[0].Origin.Y, Z);
+                    MEPCurve newVerticalMep = MEPFactory.CopyTo(doc, mep, connectors[0].Origin, endPoint);
+                    connectors[0].ConnectTo(connectors[0].GetNearestConnector(newVerticalMep));
+                    MEPCurve newMep = MEPFactory.CopyTo(doc, mep, startPoint, endPoint);
+                    connectors[1].ConnectNearConnector(doc, newMep);
+                    newVerticalMep.GetConnectorInPoint(((LocationCurve)newVerticalMep.Location).Curve.GetEndPoint(1)).ConnectNearConnector(doc, newMep);
+                }
+                else
+                {
+                    XYZ pipeConnectPt = new XYZ(connectors[1].Origin.X, connectors[1].Origin.Y, connectors[0].Origin.Z);
+                    XYZ Out = fireHydrant.HandOrientation;
+                    XYZ outToPipe = (pipeConnectPt - connectors[0].Origin).Normalize();
+                    if (1 - Math.Abs(Out.DotProduct(outToPipe)) < 0.01)// 消火栓与水管处于同一竖直平面
+                    {
+                        XYZ vector = pipeConnectPt - connectors[0].Origin;
+                        MEPCurve newMep = MEPFactory.CopyTo(doc, mep, connectors[0].Origin + vector / 4, connectors[0].Origin + vector * 3 / 4);
+                        newMep.GetConnectorInPoint(connectors[0].Origin + vector / 4).ConnectTo(connectors[0]);
+                        doc.Create.NewElbowFitting(newMep.GetConnectorInPoint(connectors[0].Origin + vector * 3 / 4), connectors[1]);
+                    }
+                    else// 消火栓与水管不处于同一竖直平面
+                    {
+                        if (Out.DotProduct(outToPipe) < 0)
+                            Out = -Out;
+                        double length = (pipeConnectPt - connectors[0].Origin).DotProduct(Out) / 2;
+                        MEPCurve newMep1 = MEPFactory.CopyTo(doc, mep, connectors[0].Origin, connectors[0].Origin + Out * length);
+                        newMep1.GetConnectorInPoint(connectors[0].Origin).ConnectTo(connectors[0]);
+                        XYZ ptStart = (newMep1.Location as LocationCurve).Curve.GetEndPoint(1);
+                        XYZ vector = pipeConnectPt - ptStart;
+                        MEPCurve newMep2 = MEPFactory.CopyTo(doc, mep, ptStart + vector / 4, ptStart + vector * 3 / 4);
+                        newMep1.GetConnectorInPoint(ptStart).ConnectNearConnector(doc, newMep2);
+                        connectors[1].ConnectNearConnector(doc, newMep2);
+                    }
+                }
                 trans.Commit();
             }
         }
@@ -80,79 +120,8 @@ namespace MEPTools.FireHyrantLink
                 }
             }
             return new Connector[2] {
-                fireConnector, GetNearestConnector(fireConnector, mep)
+                fireConnector, fireConnector.GetNearestConnector(mep)
             };
-        }
-
-        private Connector GetNearestConnector(Connector fireConnector, MEPCurve mep)
-        {
-            double minDistance = double.MaxValue;
-            Connector pipeConnector = null;
-            foreach (Connector con in mep.ConnectorManager.Connectors)
-            {
-                var dis = fireConnector.Origin.DistanceTo(con.Origin);
-                if (dis < minDistance)
-                {
-                    minDistance = dis;
-                    pipeConnector = con;
-                }
-            }
-            return pipeConnector;
-        }
-
-        private void CreateMiddlePipe(Document doc, MEPCurve mep, FamilyInstance fireHydrant, double offSet, bool isBottom)
-        {
-            Connector[] connectors = FindConnector(fireHydrant, mep, isBottom);
-            XYZ startPoint = connectors[1].Origin;
-            XYZ endPoint = connectors[0].Origin;
-
-            if (isBottom)
-            {
-                double Z = connectors[0].Origin.Z - offSet;
-                startPoint = new XYZ(connectors[1].Origin.X, connectors[1].Origin.Y, Z);
-                endPoint = new XYZ(connectors[0].Origin.X, connectors[0].Origin.Y, Z);
-                MEPCurve newVerticalMep = MEPFactory.CopyTo(doc, mep, connectors[0].Origin, endPoint);
-                connectors[0].ConnectTo(GetNearestConnector(connectors[0], newVerticalMep));
-                MEPCurve newMep = MEPFactory.CopyTo(doc, mep, startPoint, endPoint);
-                connectors[1].ConnectNearConnector(doc, newMep);
-                GetConnectorInPoint(newVerticalMep, ((LocationCurve)newVerticalMep.Location).Curve.GetEndPoint(1)).ConnectNearConnector(doc, newMep);
-            }
-            else
-            {
-                XYZ pipeConnectPt = new XYZ(connectors[1].Origin.X, connectors[1].Origin.Y, connectors[0].Origin.Z);
-                XYZ Out = fireHydrant.HandOrientation;
-                XYZ outToPipe = (pipeConnectPt - connectors[0].Origin).Normalize();
-                if (1 - Math.Abs(Out.DotProduct(outToPipe)) < 0.01)// 消火栓与水管处于同一竖直平面
-                {
-                    XYZ vector = pipeConnectPt - connectors[0].Origin;
-                    MEPCurve newMep = MEPFactory.CopyTo(doc, mep, connectors[0].Origin + vector / 4, connectors[0].Origin + vector * 3 / 4);
-                    GetConnectorInPoint(newMep, connectors[0].Origin + vector / 4).ConnectTo(connectors[0]);
-                    doc.Create.NewElbowFitting(GetConnectorInPoint(newMep, connectors[0].Origin + vector * 3 / 4), connectors[1]);
-                }
-                else// 消火栓与水管不处于同一竖直平面
-                {
-                    if (Out.DotProduct(outToPipe) < 0)
-                        Out = -Out;
-                    double length = (pipeConnectPt - connectors[0].Origin).DotProduct(Out) / 2;
-                    MEPCurve newMep1 = MEPFactory.CopyTo(doc, mep, connectors[0].Origin, connectors[0].Origin + Out * length);
-                    GetConnectorInPoint(newMep1, connectors[0].Origin).ConnectTo(connectors[0]);
-                    XYZ ptStart = (newMep1.Location as LocationCurve).Curve.GetEndPoint(1);
-                    XYZ vector = pipeConnectPt - ptStart;
-                    MEPCurve newMep2 = MEPFactory.CopyTo(doc, mep, ptStart + vector / 4, ptStart + vector * 3 / 4);
-                    GetConnectorInPoint(newMep1, ptStart).ConnectNearConnector(doc, newMep2);
-                    connectors[1].ConnectNearConnector(doc, newMep2);
-                }
-            }
-        }
-
-        private Connector GetConnectorInPoint(MEPCurve mep, XYZ point)
-        {
-            foreach (Connector con in mep.ConnectorManager.Connectors)
-            {
-                if (con.Origin.IsAlmostEqualTo(point))
-                    return con;
-            }
-            return null;
         }
 
         public FamilyInstance PickFireHyrant(UIDocument uiDoc, string prompt)

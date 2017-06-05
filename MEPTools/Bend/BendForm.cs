@@ -17,7 +17,7 @@ namespace MEPTools.Bend
             get { return double.Parse(textBoxHeightOffset.Text); }
         }
 
-        public BendCommand.Direction Direction
+        public BendUtil.Direction Direction
         {
             get
             {
@@ -29,16 +29,16 @@ namespace MEPTools.Bend
                         checkedDirection = rb.Text;
 
                         if (checkedDirection == "向上")
-                           return  BendCommand.Direction.Up;
+                           return BendUtil.Direction.Up;
                         else if (checkedDirection == "向下")
-                            return  BendCommand.Direction.Down;
+                            return BendUtil.Direction.Down;
                         else if (checkedDirection == "向左")
-                            return  BendCommand.Direction.Left;
+                            return BendUtil.Direction.Left;
                         else if (checkedDirection == "向右")
-                            return  BendCommand.Direction.Right;
+                            return BendUtil.Direction.Right;
                     }
                 }
-                return BendCommand.Direction.Up;
+                return BendUtil.Direction.Up;
             }
         }
 

@@ -13,7 +13,7 @@ namespace MEPTools.Bend
     interface IBend
     {
         MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint);
-        double GetDimension(MEPCurve mep, BendCommand.Direction direction);
+        double GetDimension(MEPCurve mep, BendUtil.Direction direction);
         //ElementId GetMEPTypeId(MEPCurve mep);
     }
 
@@ -31,7 +31,7 @@ namespace MEPTools.Bend
             return newMEP;
         }
 
-        public double GetDimension(MEPCurve mep, BendCommand.Direction direction)
+        public double GetDimension(MEPCurve mep, BendUtil.Direction direction)
         {
             Parameter dim = mep.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER);
             return dim.AsDouble() * 1.5;
@@ -57,17 +57,17 @@ namespace MEPTools.Bend
             return newMEP;
         }
 
-        public double GetDimension(MEPCurve mep, BendCommand.Direction direction)
+        public double GetDimension(MEPCurve mep, BendUtil.Direction direction)
         {
             Parameter dim = null;
             switch (direction)
             {
-                case BendCommand.Direction.Up:
-                case BendCommand.Direction.Down:
+                case BendUtil.Direction.Up:
+                case BendUtil.Direction.Down:
                     dim = mep.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
                     break;
-                case BendCommand.Direction.Left:
-                case BendCommand.Direction.Right:
+                case BendUtil.Direction.Left:
+                case BendUtil.Direction.Right:
                     dim = mep.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
                     break;
             }
@@ -94,17 +94,17 @@ namespace MEPTools.Bend
             return newMEP;
         }
 
-        public double GetDimension(MEPCurve mep, BendCommand.Direction direction)
+        public double GetDimension(MEPCurve mep, BendUtil.Direction direction)
         {
             Parameter dim = null;
             switch (direction)
             {
-                case BendCommand.Direction.Up:
-                case BendCommand.Direction.Down:
+                case BendUtil.Direction.Up:
+                case BendUtil.Direction.Down:
                     dim = mep.get_Parameter(BuiltInParameter.RBS_CABLETRAY_HEIGHT_PARAM);
                     break;
-                case BendCommand.Direction.Left:
-                case BendCommand.Direction.Right:
+                case BendUtil.Direction.Left:
+                case BendUtil.Direction.Right:
                     dim = mep.get_Parameter(BuiltInParameter.RBS_CABLETRAY_WIDTH_PARAM);
                     break;
             }

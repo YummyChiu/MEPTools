@@ -29,7 +29,7 @@ namespace MEPTools.Bend
             return default(MEPCurve);
         }
 
-        public static double GetDimension(MEPCurve mep, BendCommand.Direction direction)
+        public static double GetDimension(MEPCurve mep, BendUtil.Direction direction)
         {
             if (mep is Pipe)
             {
