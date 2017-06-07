@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.DB;
 using MEPTools.Util;
+using MEPTools.Util.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,34 +11,141 @@ namespace MEPTools.Bend
 {
     public static class BendUtil
     {
-        public static void BendTwoSide(Document doc, XYZ[] pts, MEPCurve mep, Direction direction, double heightOffset, double angle)
+        public static void BendTwoSide(Document doc, PointSet ptSet, Direction direction, double heightOffset, double angle)
         {
-            if (Valid(mep, direction, heightOffset, angle))
+            if (ptSet.IsOnSameCurve)
             {
-                Curve curve = ((LocationCurve)mep.Location).Curve;
-                XYZ mepDirection = ((Line)curve).Direction;
-                Transform translation = GetTransform(mepDirection, direction, heightOffset);
-                MEPCurve[] meps = MEPUtil.SliceMEPCurveIntoThree(doc, mep, pts, 0);
-
-                double Tan = heightOffset * Math.Tan((90 - angle) * Math.PI / 180);
-                LocationCurve locationCurve = meps[1].Location as LocationCurve;
-                locationCurve.Curve = Line.CreateBound(locationCurve.Curve.GetEndPoint(0) + (locationCurve.Curve as Line).Direction * Tan, locationCurve.Curve.GetEndPoint(1) - (locationCurve.Curve as Line).Direction * Tan).CreateTransformed(translation);
-
-                XYZ ptStart = (meps[0].Location as LocationCurve).Curve.GetEndPoint(1);
-                XYZ ptEnd = locationCurve.Curve.GetEndPoint(0);
-                MEPCurve newMep = MEPFactory.CopyTo(doc, mep, ptStart + (ptEnd - ptStart) / 4, ptStart + (ptEnd - ptStart) * 3 / 4);
-                foreach (Connector Conn in newMep.ConnectorManager.Connectors)
+                MEPCurve mep = ptSet.MepCurveSet[0];
+                XYZ[] pts = ptSet.GetPoints(mep);
+                if (Valid(mep, direction, heightOffset, angle))
                 {
-                    Conn.ConnectNearConnector(doc, meps);
-                }
-                ptStart = locationCurve.Curve.GetEndPoint(1);
-                ptEnd = (meps[2].Location as LocationCurve).Curve.GetEndPoint(0);
-                newMep = MEPFactory.CopyTo(doc, mep, ptStart + (ptEnd - ptStart) / 4, ptStart + (ptEnd - ptStart) * 3 / 4);
-                foreach (Connector Conn in newMep.ConnectorManager.Connectors)
-                {
-                    Conn.ConnectNearConnector(doc, meps);
+                    Curve curve = ((LocationCurve)mep.Location).Curve;
+                    XYZ mepDirection = ((Line)curve).Direction;
+                    Transform translation = GetTransform(mepDirection, direction, heightOffset);
+                    MEPCurve[] meps = MEPUtil.SliceMEPCurveIntoThree(doc, mep, pts, 0);
+
+                    double Tan = heightOffset * Math.Tan((90 - angle) * Math.PI / 180);
+                    LocationCurve locationCurve = meps[1].Location as LocationCurve;
+                    locationCurve.Curve = Line.CreateBound(locationCurve.Curve.GetEndPoint(0) + (locationCurve.Curve as Line).Direction * Tan, locationCurve.Curve.GetEndPoint(1) - (locationCurve.Curve as Line).Direction * Tan).CreateTransformed(translation);
+
+                    XYZ ptStart = (meps[0].Location as LocationCurve).Curve.GetEndPoint(1);
+                    XYZ ptEnd = locationCurve.Curve.GetEndPoint(0);
+                    MEPCurve newMep = MEPFactory.CopyTo(doc, mep, ptStart + (ptEnd - ptStart) / 4, ptStart + (ptEnd - ptStart) * 3 / 4);
+                    foreach (Connector Conn in newMep.ConnectorManager.Connectors)
+                    {
+                        Conn.ConnectNearConnector(doc, meps);
+                    }
+                    ptStart = locationCurve.Curve.GetEndPoint(1);
+                    ptEnd = (meps[2].Location as LocationCurve).Curve.GetEndPoint(0);
+                    newMep = MEPFactory.CopyTo(doc, mep, ptStart + (ptEnd - ptStart) / 4, ptStart + (ptEnd - ptStart) * 3 / 4);
+                    foreach (Connector Conn in newMep.ConnectorManager.Connectors)
+                    {
+                        Conn.ConnectNearConnector(doc, meps);
+                    }
                 }
             }
+            else
+            {
+                MEPCurve[] meps1 = MEPUtil.SliceMEPCurveIntoTwo(doc, ptSet.MepCurveSet[0], ptSet.GetPoints(ptSet.MepCurveSet[0])[0], 0);
+                MEPCurve[] meps2 = MEPUtil.SliceMEPCurveIntoTwo(doc, ptSet.MepCurveSet[1], ptSet.GetPoints(ptSet.MepCurveSet[1])[0], 0);
+                doc.Regenerate();
+                MEPCurve moveMep1 = meps1[0];
+                MEPCurve moveMep2 = meps2[0];
+                Connector tmpConn = moveMep1.GetConnectorInPoint(moveMep1.ToLine().GetEndPoint(1));
+                if (!tmpConn.GetConnectorsByStep(3).Exists(c => c.Origin.IsAlmostEqualTo(ptSet.GetPoints(ptSet.MepCurveSet[1])[0])))
+                {
+                    moveMep1 = meps1[1];
+                }
+                tmpConn = moveMep2.GetConnectorInPoint(moveMep2.ToLine().GetEndPoint(1));
+                if (!tmpConn.GetConnectorsByStep(3).Exists(c => c.Origin.IsAlmostEqualTo(ptSet.GetPoints(ptSet.MepCurveSet[0])[0])))
+                {
+                    moveMep2 = meps2[1];
+                }
+                Transform translation = GetTransform(moveMep1.ToLine().Direction, direction, heightOffset);
+                ElementTransformUtils.MoveElement(doc, moveMep1.Id, translation.Origin);
+                doc.Regenerate();
+
+                double Tan = heightOffset * Math.Tan((90 - angle) * Math.PI / 180);
+                LocationCurve locationCurve = moveMep1.Location as LocationCurve;
+                locationCurve.Curve = moveMep1.Id == meps1[0].Id ?
+                    Line.CreateBound(locationCurve.Curve.GetEndPoint(0), locationCurve.Curve.GetEndPoint(1) - moveMep1.ToLine().Direction * Tan) :
+                    Line.CreateBound(locationCurve.Curve.GetEndPoint(0) + moveMep1.ToLine().Direction * Tan, locationCurve.Curve.GetEndPoint(1));
+                locationCurve = moveMep2.Location as LocationCurve;
+                locationCurve.Curve = moveMep2.Id == meps2[0].Id ?
+                    Line.CreateBound(locationCurve.Curve.GetEndPoint(0), locationCurve.Curve.GetEndPoint(1) - moveMep2.ToLine().Direction * Tan) :
+                    Line.CreateBound(locationCurve.Curve.GetEndPoint(0) + moveMep2.ToLine().Direction * Tan, locationCurve.Curve.GetEndPoint(1));
+
+                XYZ ptStart = ptSet.GetPoints(ptSet.MepCurveSet[0])[0];
+                XYZ ptEnd = moveMep1.Id == meps1[0].Id ? moveMep1.ToLine().GetEndPoint(1) : moveMep1.ToLine().GetEndPoint(0);
+                MEPCurve newMep = MEPFactory.CopyTo(doc, moveMep1, ptStart + (ptEnd - ptStart) / 4, ptStart + (ptEnd - ptStart) * 3 / 4);
+                foreach (Connector Conn in newMep.ConnectorManager.Connectors)
+                {
+                    Conn.ConnectNearConnector(doc, meps1);
+                }
+                ptStart = ptSet.GetPoints(ptSet.MepCurveSet[1])[0];
+                ptEnd = moveMep2.Id == meps2[0].Id ? moveMep2.ToLine().GetEndPoint(1) : moveMep2.ToLine().GetEndPoint(0);
+                newMep = MEPFactory.CopyTo(doc, moveMep2, ptStart + (ptEnd - ptStart) / 4, ptStart + (ptEnd - ptStart) * 3 / 4);
+                foreach (Connector Conn in newMep.ConnectorManager.Connectors)
+                {
+                    Conn.ConnectNearConnector(doc, meps2);
+                }
+            }
+        }
+
+        public static List<Connector> GetConnectorsByStep(this Connector Self, int step)
+        {
+            List<Connector> result = new List<Connector>();
+            if (step == 0)
+            {
+                result.Add(Self);
+            }
+            else if (Self.Owner is FamilyInstance)
+            {
+                foreach (Connector bro in ((FamilyInstance)Self.Owner).MEPModel.ConnectorManager.Connectors)
+                {
+                    if (!bro.Origin.IsAlmostEqualTo(Self.Origin))
+                    {
+                        ConnectorSetIterator iterator = bro.AllRefs.ForwardIterator();
+                        Connector next = ConnectorSetIteratorSearch<MEPCurve>(iterator);
+                        if (next != null)
+                            result.AddRange(next.GetConnectorsByStep(step - 1));
+                        else
+                            result.Add(bro);
+                    }
+                }
+            }
+            else if (Self.Owner is MEPCurve)
+            {
+                foreach (Connector bro in ((MEPCurve)Self.Owner).ConnectorManager.Connectors)
+                {
+                    if (!bro.Origin.IsAlmostEqualTo(Self.Origin))
+                    {
+                        ConnectorSetIterator iterator = bro.AllRefs.ForwardIterator();
+                        Connector next = ConnectorSetIteratorSearch<FamilyInstance>(iterator);
+                        if (next != null)
+                            result.AddRange(next.GetConnectorsByStep(step - 1));
+                        else
+                            result.Add(bro);
+                    }
+                }
+            }
+            else
+            {
+                throw new Exception("GetConnectorsByStep: Connector.Owener is " + Self.Owner.GetType().FullName);
+            }
+            return result;
+        }
+
+        public static Connector ConnectorSetIteratorSearch<T>(ConnectorSetIterator iterator) where T : class
+        {
+            while (iterator.MoveNext())
+            {
+                if (((Connector)iterator.Current).Owner is T)
+                {
+                    return iterator.Current as Connector;
+                }
+            }
+            return null;
         }
 
         public enum Direction { Up, Down, Left, Right };

@@ -9,6 +9,7 @@ using MEPTools.Util;
 using Autodesk.Revit.UI.Selection;
 using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Plumbing;
+using MEPTools.Util.Data;
 
 namespace MEPTools.Bend
 {
@@ -32,25 +33,24 @@ namespace MEPTools.Bend
                 {
                     if (form.IsOneSideBend)
                     {
-                        MEPCurve mep = null;
-                        XYZ[] pts = MEPUtil.PickTwoPointOnMEPCurve(uiDoc, new string[] { "点选第一点开始起翻", "第二点为起翻的方向" }, out mep);
+                        PointSet ptSet = MEPUtil.PickTwoPointOnMEPCurve(uiDoc, new string[] { "点选第一点开始起翻", "第二点为起翻的方向" });
 
-                        using (Transaction trans = new Transaction(doc, "MEP Bend"))
+                        using (Transaction trans = new Transaction(doc, "MEP OneSide Bend"))
                         {
                             trans.Start();
-                            BendUtil.BendOneSide(doc, pts, mep, form.Direction, form.Offset / 304.8, form.Angle);
+                            XYZ[] pts = ptSet.GetPoints(ptSet.MepCurveSet[0]);
+                            BendUtil.BendOneSide(doc, pts, ptSet.MepCurveSet[0], form.Direction, form.Offset / 304.8, form.Angle);
                             trans.Commit();
                         }
                     }
                     else
                     {
-                        MEPCurve mep = null;
-                        XYZ[] pts = MEPUtil.PickTwoPointOnMEPCurve(uiDoc, new string[] { "点选第一点开始起翻", "点选第二点结束起翻" }, out mep);
+                        PointSet ptSet = MEPUtil.PickTwoPointOnMEPCurve(uiDoc, new string[] { "点选第一点开始起翻", "点选第二点结束起翻" });
 
-                        using (Transaction trans = new Transaction(doc, "MEP Bend"))
+                        using (Transaction trans = new Transaction(doc, "MEP TwoSide Bend"))
                         {
                             trans.Start();
-                            BendUtil.BendTwoSide(doc, pts, mep, form.Direction, form.Offset / 304.8, form.Angle);
+                            BendUtil.BendTwoSide(doc, ptSet, form.Direction, form.Offset / 304.8, form.Angle);
                             trans.Commit();
                         }
                     }

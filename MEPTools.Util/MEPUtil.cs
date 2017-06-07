@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
+using MEPTools.Util.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,20 +33,23 @@ namespace MEPTools.Util
             return intersectionResult.XYZPoint;
         }
 
-        public static XYZ[] PickTwoPointOnMEPCurve(UIDocument uiDoc, string[] prompts, out MEPCurve mep)
+        public static PointSet PickTwoPointOnMEPCurve(UIDocument uiDoc, string[] prompts)
         {
-            XYZ[] selections = new XYZ[2];
+            PointSet result = new PointSet(2);
             Reference refer1 = uiDoc.Selection.PickObject(ObjectType.PointOnElement, /*new MEPSelectionFilter(),*/ prompts[0]);
             LocationCurve locationCurve = (uiDoc.Document.GetElement(refer1) as MEPCurve).Location as LocationCurve;
             IntersectionResult intersectionResult = locationCurve.Curve.Project(refer1.GlobalPoint);
-            selections[0] = intersectionResult.XYZPoint;
+            result.AddMepCurve(uiDoc.Document.GetElement(refer1) as MEPCurve);
+            result.AddPoint(intersectionResult.XYZPoint);
             Reference refer2 = uiDoc.Selection.PickObject(ObjectType.PointOnElement, /*new MEPSelectionFilter(),*/ prompts[1]);
             if (refer1.ElementId != refer2.ElementId)
-                throw new InvalidOperationException("暂不支持选择不同管线进行翻弯操作");
+            {
+                locationCurve = (uiDoc.Document.GetElement(refer2) as MEPCurve).Location as LocationCurve;
+                result.AddMepCurve(uiDoc.Document.GetElement(refer2) as MEPCurve);
+            }
             intersectionResult = locationCurve.Curve.Project(refer2.GlobalPoint);
-            selections[1] = intersectionResult.XYZPoint;
-            mep = uiDoc.Document.GetElement(refer2) as MEPCurve;
-            return selections;
+            result.AddPoint(intersectionResult.XYZPoint);
+            return result;
         }
 
         /// <summary>

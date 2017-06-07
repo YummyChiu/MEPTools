@@ -10,10 +10,16 @@ using System.Threading.Tasks;
 
 namespace MEPTools.Bend
 {
-    interface IBend
+    abstract class IBend
     {
-        MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint);
-        double GetDimension(MEPCurve mep, BendUtil.Direction direction);
+        public virtual MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint)
+        {
+            MEPCurve newMEP = doc.GetElement(ElementTransformUtils.CopyElement(doc, mep.Id, XYZ.Zero).ElementAt(0)) as MEPCurve;
+            LocationCurve newLocationCurve = newMEP.Location as LocationCurve;
+            newLocationCurve.Curve = Line.CreateBound(startPoint, endPoint);       
+            return newMEP;
+        }
+        public abstract double GetDimension(MEPCurve mep, BendUtil.Direction direction);
         //ElementId GetMEPTypeId(MEPCurve mep);
     }
 
@@ -23,15 +29,7 @@ namespace MEPTools.Bend
 
         private PipeBend() { }
 
-        public MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint)
-        {
-            MEPCurve newMEP = doc.GetElement(ElementTransformUtils.CopyElement(doc, mep.Id, XYZ.Zero).ElementAt(0)) as MEPCurve;
-            LocationCurve newLocationCurve = newMEP.Location as LocationCurve;
-            newLocationCurve.Curve = Line.CreateBound(startPoint, endPoint);
-            return newMEP;
-        }
-
-        public double GetDimension(MEPCurve mep, BendUtil.Direction direction)
+        public override double GetDimension(MEPCurve mep, BendUtil.Direction direction)
         {
             Parameter dim = mep.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER);
             return dim.AsDouble() * 1.5;
@@ -49,15 +47,7 @@ namespace MEPTools.Bend
 
         private DuctBend() { }
 
-        public MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint)
-        {
-            MEPCurve newMEP = doc.GetElement(ElementTransformUtils.CopyElement(doc, mep.Id, XYZ.Zero).ElementAt(0)) as MEPCurve;
-            LocationCurve newLocationCurve = newMEP.Location as LocationCurve;
-            newLocationCurve.Curve = Line.CreateBound(startPoint, endPoint);
-            return newMEP;
-        }
-
-        public double GetDimension(MEPCurve mep, BendUtil.Direction direction)
+        public override double GetDimension(MEPCurve mep, BendUtil.Direction direction)
         {
             Parameter dim = null;
             switch (direction)
@@ -86,15 +76,7 @@ namespace MEPTools.Bend
 
         private CableTrayBend() { }
 
-        public MEPCurve CopyTo(Document doc, MEPCurve mep, XYZ startPoint, XYZ endPoint)
-        {
-            MEPCurve newMEP = doc.GetElement(ElementTransformUtils.CopyElement(doc, mep.Id, XYZ.Zero).ElementAt(0)) as MEPCurve;
-            LocationCurve newLocationCurve = newMEP.Location as LocationCurve;
-            newLocationCurve.Curve = Line.CreateBound(startPoint, endPoint);
-            return newMEP;
-        }
-
-        public double GetDimension(MEPCurve mep, BendUtil.Direction direction)
+        public override double GetDimension(MEPCurve mep, BendUtil.Direction direction)
         {
             Parameter dim = null;
             switch (direction)
