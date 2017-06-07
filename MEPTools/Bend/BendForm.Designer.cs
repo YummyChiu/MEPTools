@@ -234,7 +234,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(331, 338);
+            this.ClientSize = new System.Drawing.Size(325, 338);
             this.Controls.Add(this.textBoxHeightOffset);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.groupBoxAngle);
@@ -246,9 +246,9 @@
             this.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MaximizeBox = false;
-            this.MaximumSize = new System.Drawing.Size(347, 376);
+            this.MaximumSize = new System.Drawing.Size(341, 376);
             this.MinimizeBox = false;
-            this.MinimumSize = new System.Drawing.Size(347, 376);
+            this.MinimumSize = new System.Drawing.Size(341, 376);
             this.Name = "BendForm";
             this.ShowIcon = false;
             this.Text = "一键翻弯";

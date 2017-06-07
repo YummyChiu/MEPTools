@@ -62,6 +62,14 @@
     <Compile Include="Bend\BendUtil.cs" />
     <Compile Include="Bend\IBend.cs" />
     <Compile Include="Bend\MEPFactory.cs" />
+    <Compile Include="Elbow\ElbowCommand.cs" />
+    <Compile Include="Elbow\ElbowFilter.cs" />
+    <Compile Include="Elbow\ElbowForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Elbow\ElbowForm.Designer.cs">
+      <DependentUpon>ElbowForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="FireHyrantLink\FireHydrantLinkForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -97,6 +105,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Bend\BendForm.resx">
       <DependentUpon>BendForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Elbow\ElbowForm.resx">
+      <DependentUpon>ElbowForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FireHyrantLink\FireHydrantLinkForm.resx">
       <DependentUpon>FireHydrantLinkForm.cs</DependentUpon>
