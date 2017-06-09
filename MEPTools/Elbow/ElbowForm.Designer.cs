@@ -64,7 +64,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(68, 17);
             this.label1.TabIndex = 9;
-            this.label1.Text = "起翻高度：";
+            this.label1.Text = "倒角长度：";
             // 
             // button2
             // 

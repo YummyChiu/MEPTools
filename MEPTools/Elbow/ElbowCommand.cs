@@ -35,6 +35,10 @@ namespace MEPTools.Elbow
                         FamilyInstance elbow = PickElbow(uiDoc, "请选择弯头");
                         Connector[] connectors = GetConnectorsBeside(elbow);
                         MEPUtil.Delete(doc, elbow);
+
+                        // 管道向内缩的长度的值为x,界面指定的offset为D，两个connector的距离为d，那么
+                        // √2x + d = D,具体参见45°等腰梯形
+
                         double offset = (form.Offset / 304.8 - connectors[0].Origin.DistanceTo(connectors[1].Origin)) / (2 * Math.Cos(Math.PI / 4));
                         MEPCurve mep = connectors[0].Owner as MEPCurve;
                         (mep.Location as LocationCurve).Curve = mep.ToLine().GetEndPoint(0).IsAlmostEqualTo(connectors[0].Origin) ?
@@ -47,9 +51,14 @@ namespace MEPTools.Elbow
                             Line.CreateBound(mep.ToLine().GetEndPoint(0), mep.ToLine().GetEndPoint(1) - mep.ToLine().Direction * offset);
 
                         MEPCurve newMep = Bend.MEPFactory.CopyTo(doc, mep, connectors[0].Origin + (connectors[1].Origin - connectors[0].Origin) / 4, connectors[0].Origin + (connectors[1].Origin - connectors[0].Origin) * 3 / 4);
-                        connectors[0].ConnectNearConnector(doc, newMep);
-                        connectors[1].ConnectNearConnector(doc, newMep);
-                        trans.Commit();
+                        if (!connectors[0].IsValidObject || !connectors[1].IsValidObject)
+                            trans.RollBack();
+                        else
+                        {
+                            connectors[0].ConnectNearConnector(doc, newMep);
+                            connectors[1].ConnectNearConnector(doc, newMep);
+                            trans.Commit();
+                        }
                     }
                 }
                 catch (InvalidOperationException ex)
@@ -69,6 +78,11 @@ namespace MEPTools.Elbow
             return Result.Succeeded;
         }
 
+        /// <summary>
+        /// 得到弯头的两个connector(AllRefs's owner可能不是pipe,有可能是pipe system，具体判断请转至 BendUtil.ConnectorSetIteratorSearch<T>(iterator)) 
+        /// </summary>
+        /// <param name="familyInstance"></param>
+        /// <returns></returns>
         private Connector[] GetConnectorsBeside(FamilyInstance familyInstance)
         {
             Connector[] result = new Connector[2];
